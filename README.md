@@ -1,0 +1,1 @@
+WIP, bittorrent client in c++. Mostly built from scartch. Inspiration from https://allenkim67.github.io/programming/2016/05/04/how-to-make-your-own-bittorrent-client.html and https://github.com/ss16118/torrent-client-cpp
