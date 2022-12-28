@@ -71,6 +71,13 @@
         "utility": "cpp",
         "__tree": "cpp",
         "charconv": "cpp",
-        "map": "cpp"
+        "map": "cpp",
+        "condition_variable": "cpp",
+        "future": "cpp",
+        "list": "cpp",
+        "numeric": "cpp",
+        "queue": "cpp",
+        "set": "cpp",
+        "thread": "cpp"
     }
 }

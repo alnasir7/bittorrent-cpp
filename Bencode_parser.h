@@ -13,8 +13,9 @@ struct File
 {
     num_t length;
     std::vector<std::string> path;
+    std::string name;
 
-    File(num_t length, std::vector<std::string> path);
+    File(num_t length, std::vector<std::string> path, std::string name);
 };
 
 class Bencode_parser

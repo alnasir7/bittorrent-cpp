@@ -6,14 +6,16 @@ PROG=bittorrent
 #
 override CPPFLAGS += -DNDEBUG -DPROMPT=$(PROMPT)
 
-CC = clang++ -std=c++20
-
 # Replace -O1 with -g for a debug version during development
 #
 CFLAGS = -Wall -Werror -g
 
 SRCS = $(wildcard *.cpp) $(wildcard */*.cpp)
 OBJS = $(SRCS:.c=.o)
+LDFLAGS = -L/Users/mabaker/Penn/cpp/libs/cpr/build/lib
+LDLIBS = -lcpr
+
+CC = clang++ -std=c++20 $(LDFLAGS) $(LDLIBS)
 
 .PHONY : clean
 

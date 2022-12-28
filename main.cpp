@@ -4,11 +4,16 @@
 #include "Bencode_parser.h"
 #include "tracker_connect.h"
 
-const std::string filepath = "./sintel.torrent";
+const std::string file_prefix = "./test_torrents/";
+const std::string file_suffix = ".torrent";
 
 int main(int argc, const char **argv)
 {
-    Bencode_parser parser{filepath};
+    std::string file{argv[1]};
+    std::string file_path = file_prefix + file + file_suffix;
+
+    std::cout << file_path << "\n";
+    Bencode_parser parser{file_path};
 
     connect(parser);
 
