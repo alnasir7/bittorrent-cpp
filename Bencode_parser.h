@@ -6,6 +6,16 @@
 #include "bencode.hpp"
 
 using map_t = bencode::map_proxy<std::string, bencode::data>;
+using list_t = std::vector<bencode::data>;
+using num_t = long long;
+
+struct File
+{
+    num_t length;
+    std::vector<std::string> path;
+
+    File(num_t length, std::vector<std::string> path);
+};
 
 class Bencode_parser
 {
@@ -16,5 +26,6 @@ public:
     Bencode_parser(std::string file);
     std::string get_announce();
     map_t get_info();
+    std::vector<File> get_files();
 };
 #endif // !BENCODE_PARSER_H

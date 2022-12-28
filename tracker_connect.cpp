@@ -1,7 +1,9 @@
 #include <string>
 #include "Bencode_parser.h"
+#include "bencode.hpp"
 #include <chrono>
 #include <ctime>
+#include "sha1.h"
 
 struct tracker_request
 {
@@ -12,7 +14,7 @@ struct tracker_request
     std::string left;
     std::string compact;
 
-    tracker_request(std::string info_hash, int file_sizes) : info_hash{info_hash}, left{std::to_string(file_sizes)}
+    tracker_request(std::string info_hash, num_t file_sizes) : info_hash{info_hash}, left{std::to_string(file_sizes)}
     {
         peer_id = "";
         // get current time
@@ -36,7 +38,7 @@ struct tracker_request
             peer_id += digit;
         }
 
-        std::cout << peer_id << "\n";
+        // std::cout << peer_id << "\n";
 
         port = "6881";
         uploaded = "0";
@@ -48,5 +50,16 @@ void connect(Bencode_parser &torrent)
 {
     std::string url = torrent.get_announce();
     map_t info = torrent.get_info();
-    tracker_request request{"hash", 0};
+    std::string info_string = bencode::encode(info);
+    std::string sha_info_string = sha1(info_string);
+
+    auto files = torrent.get_files();
+    num_t total_size = 0;
+
+    for (auto file : files)
+    {
+        total_size++;
+    }
+
+    tracker_request request{sha_info_string, total_size};
 }
