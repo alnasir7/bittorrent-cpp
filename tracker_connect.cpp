@@ -4,7 +4,23 @@
 #include <chrono>
 #include <ctime>
 #include "sha1.h"
+#include "info_hash.h"
+#include "tracker_response.h"
+#include "bencode.hpp"
 #include <cpr/cpr.h>
+
+// std::string hexDecode(const std::string &value)
+// {
+//     int hashLength = value.length();
+//     std::string decodedHexString;
+//     for (int i = 0; i < hashLength; i += 2)
+//     {
+//         std::string byte = value.substr(i, 2);
+//         char c = (char)(int)strtol(byte.c_str(), nullptr, 16);
+//         decodedHexString.push_back(c);
+//     }
+//     return decodedHexString;
+// }
 
 struct tracker_request
 {
@@ -17,7 +33,7 @@ struct tracker_request
     std::string left;
     std::string compact;
 
-    tracker_request(std::string info_hash, num_t file_sizes, std::string url) : info_hash{info_hash}, left{std::to_string(file_sizes)}, downloaded{"0"}, uploaded{"0"}, compact{"1"}, port{"6881"}, url{url}
+    tracker_request(std::string info_hash, num_t file_sizes, std::string url) : info_hash{info_hash}, left{std::to_string(file_sizes)}, downloaded{"0"}, uploaded{"0"}, compact{"1"}, port{"8080"}, url{url}
     {
         peer_id = "";
         // get current time
@@ -47,10 +63,10 @@ tracker_request generate_request(Bencode_parser &torrent)
 {
     std::string url = torrent.get_announce();
     map_t info = torrent.get_info();
-    std::string info_string = bencode::encode(info);
-    std::string sha_info_string = sha1(info_string);
+    std::string info_hash = get_info_hash(info);
 
-    std::cout << "info hash: " << sha_info_string << std::endl;
+    std::cout << "info hash: " << info_hash << std::endl;
+    std::cout << "url: " << url << std::endl;
 
     auto files = torrent.get_files();
     num_t total_size = 0;
@@ -60,7 +76,38 @@ tracker_request generate_request(Bencode_parser &torrent)
         total_size += file.length;
     }
 
-    return tracker_request{sha_info_string, total_size, url};
+    return tracker_request{info_hash, total_size, url};
+}
+
+void parse_peers(std::string peers_response)
+{
+    // std::cout << peers_response;
+    tracker_response response;
+    auto res_variant = bencode::decode(peers_response);
+    map_t res = std::get<map_t>(res_variant);
+
+    // parse the response data one by one
+
+    auto interval_variant = res.find("interval");
+    auto interval = std::get<num_t>(interval_variant->second);
+    response.interval = interval;
+
+    // auto tracker_id_variant = res.find("tracker id");
+    // auto tracker_id = std::get<num_t>(tracker_id_variant->second);
+    // response.tracker_id = tracker_id;
+
+    auto complete_variant = res.find("complete");
+    auto complete = std::get<num_t>(complete_variant->second);
+    response.complete = complete;
+
+    auto incomplete_variant = res.find("incomplete");
+    auto incomplete = std::get<num_t>(incomplete_variant->second);
+    response.incomplete = incomplete;
+
+    auto peers_variant = res.find("peers");
+    auto peers_list = std::get<std::string>(peers_variant->second);
+
+    std::cout << peers_list << std::endl;
 }
 
 void get_peers(tracker_request &request_info)
@@ -76,10 +123,10 @@ void get_peers(tracker_request &request_info)
         {"compact", request_info.compact}};
 
     cpr::Response r = cpr::Get(cpr::Url{request_info.url},
-                               cpr::Authentication{"user", "pass", cpr::AuthMode::BASIC},
                                params);
 
-    std::cout << r.text;
+    if (r.status_code == 200)
+        parse_peers(r.text);
 }
 
 void connect(Bencode_parser &torrent)
