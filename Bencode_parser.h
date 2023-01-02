@@ -1,7 +1,6 @@
 #ifndef BENCODE_PARSER_H
 #define BENCODE_PARSER_H
 
-
 #include <string>
 #include "bencode.hpp"
 

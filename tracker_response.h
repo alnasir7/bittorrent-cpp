@@ -17,6 +17,8 @@ struct tracker_response
     num_t complete;
     num_t incomplete;
     std::vector<Peer> peers;
+    std::string client_id;
+    std::string info_hash;
 };
 
 #endif // !TRACKER_RESPONSE_H

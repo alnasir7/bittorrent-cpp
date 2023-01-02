@@ -5,6 +5,7 @@
 #include "Bencode_parser.h"
 #include "tracker_connect.h"
 #include "tracker_response.h"
+#include "peers_connect.h"
 #include <sys/socket.h>
 #define ASIO_STANDALONE
 #include <asio.hpp>
@@ -27,24 +28,9 @@ int main(int argc, const char **argv)
         exit(0);
     }
 
-    Peer p = response.value().peers[0];
+    Peer p = response.value().peers[6];
 
-    asio::error_code ec{};
-
-    asio::ip::tcp::endpoint endpoint(asio::ip::make_address(p.ip, ec), p.port);
-
-    asio::io_context context;
-
-    asio::ip::tcp::socket socket{context};
-
-    if (ec)
-    {
-        std::cout << "failed to connect\n";
-    }
-    else
-    {
-        std::cout << "connected successfully\n";
-    }
+    handshake(p, response.value().info_hash, response.value().client_id);
 
     // connect to peers and establish what pieces they have
 

@@ -80,29 +80,36 @@ tracker_request generate_request(Bencode_parser &torrent)
     return tracker_request{info_hash, total_size, url};
 }
 
+int bytesToInt(std::string bytes)
+{
+    // FIXME: Use bitwise operation to convert
+    std::string binStr;
+    long byteCount = bytes.size();
+    for (int i = 0; i < byteCount; i++)
+        binStr += std::bitset<8>(bytes[i]).to_string();
+    return stoi(binStr, 0, 2);
+}
+
 std::vector<Peer> parse_peers(std::string &peers_binary)
 {
     std::vector<Peer> result{};
     int p = 0;
     while (p < peers_binary.size() - 5)
     {
-        uint8_t ip_1 = peers_binary[p++];
-        uint8_t ip_2 = peers_binary[p++];
-        uint8_t ip_3 = peers_binary[p++];
-        uint8_t ip_4 = peers_binary[p++];
+        std::stringstream ip_address;
+        ip_address << std::to_string((uint8_t)peers_binary[p]) << ".";
+        ip_address << std::to_string((uint8_t)peers_binary[p + 1]) << ".";
+        ip_address << std::to_string((uint8_t)peers_binary[p + 2]) << ".";
+        ip_address << std::to_string((uint8_t)peers_binary[p + 3]);
+        int port = bytesToInt(peers_binary.substr(p + 4, 2));
 
-        std::string ip_address = std::to_string(ip_1) + "." + std::to_string(ip_2) + "." + std::to_string(ip_3) + "." + std::to_string(ip_4);
+        std::cout << ip_address.str() << ":" << port << std::endl;
 
-        // std::cout << "ip: " << ip_address << std::endl;
-
-        uint8_t port_1 = peers_binary[p++];
-        uint8_t port_2 = peers_binary[p++];
-
-        int port = port_1 * 100 + port_2;
-
-        Peer peer{"", ip_address, port};
+        Peer peer{"", ip_address.str(), port};
 
         result.push_back(peer);
+
+        p += 6;
     }
 
     return result;
@@ -167,5 +174,10 @@ std::optional<tracker_response> connect(Bencode_parser &torrent)
 {
     tracker_request request = generate_request(torrent);
     std::optional<tracker_response> response = get_response(request);
+    if (response.has_value())
+    {
+        response.value().info_hash = request.info_hash;
+        response.value().client_id = request.peer_id;
+    }
     return response;
 }
