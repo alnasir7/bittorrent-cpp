@@ -2,6 +2,7 @@
 #include "Bencode_parser.h"
 #include "bencode.hpp"
 #include <chrono>
+#include <optional>
 #include <ctime>
 #include "sha1.h"
 #include "info_hash.h"
@@ -65,8 +66,8 @@ tracker_request generate_request(Bencode_parser &torrent)
     map_t info = torrent.get_info();
     std::string info_hash = get_info_hash(info);
 
-    std::cout << "info hash: " << info_hash << std::endl;
-    std::cout << "url: " << url << std::endl;
+    // std::cout << "info hash: " << info_hash << std::endl;
+    // std::cout << "url: " << url << std::endl;
 
     auto files = torrent.get_files();
     num_t total_size = 0;
@@ -79,7 +80,7 @@ tracker_request generate_request(Bencode_parser &torrent)
     return tracker_request{info_hash, total_size, url};
 }
 
-std::vector<Peer> parse_peers(std::string peers_binary)
+std::vector<Peer> parse_peers(std::string &peers_binary)
 {
     std::vector<Peer> result{};
     int p = 0;
@@ -142,7 +143,7 @@ tracker_response parse_tracker_response(std::string r)
     return response;
 }
 
-void get_peers(tracker_request &request_info)
+std::optional<tracker_response> get_response(tracker_request &request_info)
 {
 
     cpr::Parameters params{
@@ -157,11 +158,14 @@ void get_peers(tracker_request &request_info)
     cpr::Response r = cpr::Get(cpr::Url{request_info.url},
                                params);
     if (r.status_code == 200)
-        parse_tracker_response(r.text);
+        return std::optional<tracker_response>{parse_tracker_response(r.text)};
+    else
+        return std::nullopt;
 }
 
-void connect(Bencode_parser &torrent)
+std::optional<tracker_response> connect(Bencode_parser &torrent)
 {
     tracker_request request = generate_request(torrent);
-    get_peers(request);
+    std::optional<tracker_response> response = get_response(request);
+    return response;
 }

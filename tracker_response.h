@@ -1,3 +1,5 @@
+#ifndef TRACKER_RESPONSE_H
+#define TRACKER_RESPONSE_H
 #include "Bencode_parser.h"
 #include <vector>
 #include <string>
@@ -16,3 +18,5 @@ struct tracker_response
     num_t incomplete;
     std::vector<Peer> peers;
 };
+
+#endif // !TRACKER_RESPONSE_H
