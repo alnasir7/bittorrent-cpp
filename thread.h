@@ -15,11 +15,13 @@ namespace torrent
         int id;
         int peer_id;
         downloader::peer peer;
+        metadata metadata;
 
     public:
-        thread(int id, int peer_id, downloader::peer peer);
-        bool torrent::thread::start();
-        ~thread();
+        thread(int id, int peer_id, downloader::peer peer, torrent::metadata metadata);
+        bool start();
+        bool handle_handshake(std::vector<char> received_message);
+        bool handshake();
     };
 
 }

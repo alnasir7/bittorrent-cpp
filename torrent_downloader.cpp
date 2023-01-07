@@ -6,6 +6,7 @@
 #include "peers_connect.h"
 #include <iostream>
 #include <thread>
+#include "thread.h"
 
 namespace torrent::downloader
 {
@@ -22,6 +23,21 @@ namespace torrent::downloader
         else
         {
             std::cout << "successfully connected\n";
+            torrent::tracker::tracker_response response_value = response.value();
+            metadata.client_id = response_value.client_id;
+            metadata.complete = response_value.complete;
+            metadata.incomplete = response_value.incomplete;
+            metadata.info_hash = response_value.info_hash;
+            metadata.interval = response_value.interval;
+
+            peers = std::vector<peer>(response_value.peers.size());
+            for (int i = 0; i < peers.size(); i++)
+            {
+                peers[i].address = response_value.peers[i].ip;
+                peers[i].port = response_value.peers[i].port;
+                peers[i].peer_id = response_value.peers[i].peer_id;
+                peers[i].id = i;
+            }
         }
     }
 
@@ -30,7 +46,14 @@ namespace torrent::downloader
         std::thread threads[num_threads];
         for (int i = 0; i < num_threads; i++)
         {
-            // std::thread thread ()
+            torrent::thread torrent_thread{i, i, peers[18], metadata};
+            std::thread thread(&torrent::thread::start, torrent_thread);
+            threads[i] = std::move(thread);
+        }
+
+        for (int i = 0; i < num_threads; i++)
+        {
+            threads[i].join();
         }
     }
 }

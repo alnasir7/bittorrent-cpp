@@ -6,14 +6,28 @@
 
 using num_t = long long;
 
+namespace torrent
+{
+    struct metadata
+    {
+        num_t interval;
+        num_t tracker_id;
+        num_t complete;
+        num_t incomplete;
+        std::string client_id;
+        std::string info_hash;
+    };
+};
+
 namespace torrent::downloader
 {
     struct peer
     {
         std::string address;
-        int id;
+        int id;              // internal
+        std::string peer_id; // external
         int port;
-        int thread_in_charge; //-1 => available
+        int thread_in_charge; // -1 => available
     };
 
     struct piece
@@ -28,12 +42,7 @@ namespace torrent::downloader
     private:
         std::vector<peer> peers;
         int num_threads;
-        num_t interval;
-        num_t tracker_id;
-        num_t complete;
-        num_t incomplete;
-        std::string client_id;
-        std::string info_hash;
+        torrent::metadata metadata;
         std::vector<piece> pieces;
 
     public:

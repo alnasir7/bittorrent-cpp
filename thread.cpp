@@ -1,32 +1,63 @@
 #include "thread.h"
-#include "tracker_response.h"
-#include <string>
-#include <thread>
-#include <chrono>
-#include <vector>
-#include <string>
-#include <sstream>
 #include "messages.hpp"
+#include "tracker_response.h"
 #include <asio.hpp>
-#include <asio/ts/internet.hpp>
 #include <asio/ts/buffer.hpp>
+#include <asio/ts/internet.hpp>
+#include <chrono>
+#include <sstream>
+#include <string>
+#include <iostream>
+#include <thread>
+#include <vector>
 namespace torrent
 {
-    torrent::thread::thread(int id, int peer_id, downloader::peer peer) : id{id}, peer_id{peer_id}, peer{peer}
+    torrent::thread::thread(int id, int peer_id, downloader::peer peer, torrent::metadata metadata)
+        : id{id}, peer_id{peer_id}, peer{peer}, metadata{metadata}
     {
     }
 
     bool torrent::thread::start()
     {
+        if (handshake())
+        {
+            std::cout << "successful handshake";
+            return true;
+        }
+        else
+        {
+            std::cout << "bad handshake";
+            return false;
+        }
+    }
+
+    bool torrent::thread::handle_handshake(std::vector<char> received_message)
+    {
+        std::stringstream rec_info_sha_binary;
+        for (int i = 28, j = 0; j < 20; i++, j++)
+        {
+            rec_info_sha_binary << received_message[i];
+        }
+
+        std::string rec_info_sha = rec_info_sha_binary.str();
+
+        if (rec_info_sha == metadata.info_hash)
+        {
+            std::cout << "info sha matched" << std::endl;
+            return true;
+        }
+        else
+        {
+            std::cout << "info sha not matching" << std::endl;
+            return false;
+        }
     }
 
     bool torrent::thread::handshake()
     {
-
-        std::cout << peer.ip << ":" << peer.port << std::endl;
         asio::error_code ec{};
 
-        asio::ip::tcp::endpoint endpoint(asio::ip::make_address(peer.ip, ec), peer.port);
+        asio::ip::tcp::endpoint endpoint(asio::ip::make_address(peer.address, ec), peer.port);
 
         if (ec)
         {
@@ -46,10 +77,10 @@ namespace torrent
         }
         else
         {
-            std::cout << "connected\n";
+            std::cout << "connected to peer" << peer_id << std::endl;
         }
 
-        std::string handshake_string = generate_handshake(info_hash, client_id);
+        std::string handshake_string = generate_handshake(metadata.info_hash, metadata.client_id);
         socket.write_some(asio::buffer(handshake_string.data(), handshake_string.length()), ec);
 
         if (ec)
@@ -69,25 +100,26 @@ namespace torrent
         if (num_bytes > 0)
         {
             socket.read_some(asio::buffer(read_buffer.data(), read_buffer.size()), ec);
-            receiver(read_buffer, info_hash);
+            handle_handshake(read_buffer);
+
+            // receiver(read_buffer, info_hash);
         }
 
         return true;
     }
-}
+} // namespace torrent
 
 /*
+#include "messages.hpp"
 #include "tracker_response.h"
+#include <asio.hpp>
+#include <asio/ts/buffer.hpp>
+#include <asio/ts/internet.hpp>
+#include <chrono>
+#include <sstream>
 #include <string>
 #include <thread>
-#include <chrono>
 #include <vector>
-#include <string>
-#include <sstream>
-#include "messages.hpp"
-#include <asio.hpp>
-#include <asio/ts/internet.hpp>
-#include <asio/ts/buffer.hpp>
 
 void handle_handshake(std::vector<char> received_message, std::string info_sha)
 {
