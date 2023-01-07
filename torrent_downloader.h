@@ -27,6 +27,7 @@ namespace torrent::downloader
     {
     private:
         std::vector<peer> peers;
+        int num_threads;
         num_t interval;
         num_t tracker_id;
         num_t complete;
@@ -36,7 +37,7 @@ namespace torrent::downloader
         std::vector<piece> pieces;
 
     public:
-        downloader(std::string path);
+        downloader(std::string path, int num_threads);
         void download(int status);
     };
 }

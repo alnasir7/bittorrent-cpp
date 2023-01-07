@@ -16,8 +16,7 @@ int main(int argc, const char **argv)
 {
     std::string file{argv[1]};
     std::string file_path = file_prefix + file + file_suffix;
-
-    torrent::downloader::downloader downloader{file_path};
+    torrent::downloader::downloader downloader{file_path, 3};
 
     // Peer p = response.value().peers[18];
 
