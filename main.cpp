@@ -28,7 +28,7 @@ int main(int argc, const char **argv)
         exit(0);
     }
 
-    Peer p = response.value().peers[6];
+    Peer p = response.value().peers[18];
 
     handshake(p, response.value().info_hash, response.value().client_id);
 
