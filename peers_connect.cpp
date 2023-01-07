@@ -56,7 +56,7 @@ void receiver(std::vector<char> received_message, std::string info_hash)
     std::cout << len << std::endl;
 }
 
-bool handshake(Peer peer, std::string info_hash, std::string client_id)
+bool handshake(torrent::tracker::Peer peer, std::string info_hash, std::string client_id)
 {
 
     std::cout << peer.ip << ":" << peer.port << std::endl;

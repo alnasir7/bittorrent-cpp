@@ -4,5 +4,8 @@
 #include "Bencode_parser.h"
 #include "tracker_response.h"
 #include <optional>
-std::optional<tracker_response> connect(Bencode_parser &torrent);
+namespace torrent::tracker
+{
+    std::optional<torrent::tracker::tracker_response> connect(Bencode_parser &torrent);
+}
 #endif // !TRACKER_CONNECT_H
