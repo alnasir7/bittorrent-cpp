@@ -3,6 +3,7 @@
 
 #include <string>
 #include <queue>
+#include <optional>
 
 using num_t = long long;
 
@@ -48,6 +49,8 @@ namespace torrent::downloader
     public:
         downloader(std::string path, int num_threads);
         void download(int status);
+        std::optional<peer> request_peer(int id);
+        void release_peer(int peer_id);
     };
 }
 #endif // !TORRENT_DOWNLOADER_H

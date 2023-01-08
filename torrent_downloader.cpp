@@ -6,6 +6,7 @@
 #include "peers_connect.h"
 #include <iostream>
 #include <thread>
+#include <optional>
 #include "thread.h"
 
 namespace torrent::downloader
@@ -37,6 +38,7 @@ namespace torrent::downloader
                 peers[i].port = response_value.peers[i].port;
                 peers[i].peer_id = response_value.peers[i].peer_id;
                 peers[i].id = i;
+                peers[i].thread_in_charge = -1;
             }
         }
     }
@@ -46,7 +48,7 @@ namespace torrent::downloader
         std::thread threads[num_threads];
         for (int i = 0; i < num_threads; i++)
         {
-            torrent::thread torrent_thread{i, i, peers[18], metadata};
+            torrent::thread torrent_thread{i, metadata, this};
             std::thread thread(&torrent::thread::start, torrent_thread);
             threads[i] = std::move(thread);
         }
@@ -55,5 +57,23 @@ namespace torrent::downloader
         {
             threads[i].join();
         }
+    }
+
+    std::optional<peer> downloader::request_peer(int id)
+    {
+        for (int i = 0; i < peers.size(); i++)
+        {
+            if (peers[i].thread_in_charge == -1)
+            {
+                peers[i].thread_in_charge = id;
+                return std::optional<peer>{peers[i]};
+            }
+        }
+        return std::nullopt;
+    }
+
+    void downloader::release_peer(int peer_id)
+    {
+        peers[peer_id].thread_in_charge = -1;
     }
 }

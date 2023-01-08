@@ -9,28 +9,63 @@
 #include <string>
 #include <iostream>
 #include <thread>
+#include <optional>
 #include <vector>
 #include <future> // std::async, std::future
 
 namespace torrent
 {
-    torrent::thread::thread(int id, int peer_id, downloader::peer peer, torrent::metadata metadata)
-        : id{id}, peer_id{peer_id}, peer{peer}, metadata{metadata}
+    torrent::thread::thread(int id, torrent::metadata metadata, downloader::downloader *downloader)
+        : id{id}, metadata{metadata}, downloader{downloader}, has_peer{false}
     {
     }
 
-    bool torrent::thread::start()
+    bool torrent::thread::set_peer()
     {
-        if (handshake())
+        std::optional<downloader::peer> new_peer_option = downloader->request_peer(id);
+        if (new_peer_option.has_value())
         {
-            std::cout << "successful handshake";
+            peer = new_peer_option.value();
             return true;
         }
         else
         {
-            std::cout << "bad handshake";
+            std::terminate();
+        }
+    }
+
+    void torrent::thread::release_peer()
+    {
+        if (has_peer)
+        {
+            has_peer = false;
+            downloader->release_peer(peer.id);
+        }
+    }
+
+    bool torrent::thread::establish_peer_connection()
+    {
+        bool handshake_success = false;
+        while (!handshake_success)
+        {
+            std::cout << "attempt handshake" << std::endl;
+            release_peer();
+            set_peer();
+            handshake_success = handshake();
+        }
+
+        std::cout << "successful handshake" << std::endl;
+        return true;
+    }
+
+    bool torrent::thread::start()
+    {
+        if (!establish_peer_connection())
+        {
             return false;
         }
+
+        return true;
     }
 
     bool torrent::thread::handle_handshake(std::vector<char> received_message)
@@ -71,7 +106,7 @@ namespace torrent
 
         asio::ip::tcp::socket socket{context};
 
-        std::chrono::milliseconds span(1000);
+        std::chrono::milliseconds span(100);
         std::chrono::milliseconds zero_s(0);
 
         std::future<void> connect_status = socket.async_connect(endpoint, asio::use_future);
@@ -90,7 +125,7 @@ namespace torrent
         }
         else
         {
-            std::cout << "connected to peer" << peer_id << std::endl;
+            std::cout << "connected to peer" << peer.id << std::endl;
         }
 
         std::string handshake_string = generate_handshake(metadata.info_hash, metadata.client_id);
