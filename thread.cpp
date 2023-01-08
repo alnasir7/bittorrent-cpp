@@ -10,6 +10,8 @@
 #include <iostream>
 #include <thread>
 #include <vector>
+#include <future> // std::async, std::future
+
 namespace torrent
 {
     torrent::thread::thread(int id, int peer_id, downloader::peer peer, torrent::metadata metadata)
@@ -69,7 +71,18 @@ namespace torrent
 
         asio::ip::tcp::socket socket{context};
 
-        socket.connect(endpoint, ec);
+        std::chrono::milliseconds span(1000);
+        std::chrono::milliseconds zero_s(0);
+
+        std::future<void> connect_status = socket.async_connect(endpoint, asio::use_future);
+        context.run_for(span);
+
+        if (connect_status.wait_for(zero_s) == std::future_status::timeout)
+            return false;
+
+        connect_status.get();
+
+        // socket.connect(endpoint, ec);
 
         if (ec)
         {

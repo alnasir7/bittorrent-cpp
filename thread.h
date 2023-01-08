@@ -22,6 +22,7 @@ namespace torrent
         bool start();
         bool handle_handshake(std::vector<char> received_message);
         bool handshake();
+        bool connect();
     };
 
 }
