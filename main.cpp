@@ -16,7 +16,7 @@ int main(int argc, const char **argv)
 {
     std::string file{argv[1]};
     std::string file_path = file_prefix + file + file_suffix;
-    torrent::downloader::downloader downloader{file_path, 2};
+    torrent::downloader::downloader downloader{file_path, 1};
     int torrent_status;
     downloader.download(torrent_status);
 

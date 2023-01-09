@@ -16,7 +16,7 @@ LDFLAGS = -L/Users/mabaker/Penn/cpp/libs/cpr/build/lib
 LDLIBS = -lcpr
 IncDirectories = /Users/mabaker/Penn/cpp/libs/asio/include
 
-CC = clang++ -std=c++20 $(LDFLAGS) $(LDLIBS) -I $(IncDirectories)
+CC = clang++ -std=c++20 -O0 -g $(LDFLAGS) $(LDLIBS) -I $(IncDirectories)
 
 .PHONY : clean
 

@@ -15,6 +15,8 @@
         -- Volker Grabsch <vog@notjusthosting.com>
 */
 
+// get the new one from here https://github.com/vog/sha1/blob/master/sha1.hpp
+
 #include "sha1.h"
 #include <sstream>
 #include <iomanip>

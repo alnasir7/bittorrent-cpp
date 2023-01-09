@@ -30,7 +30,7 @@ namespace torrent
         }
         else
         {
-            std::terminate();
+            return false;
         }
     }
 
@@ -48,10 +48,15 @@ namespace torrent
         bool handshake_success = false;
         while (!handshake_success)
         {
-            std::cout << "attempt handshake" << std::endl;
+            // std::cout << "attempt handshake from " << id << std::endl;
             release_peer();
-            set_peer();
+            if (!set_peer())
+            {
+                return false;
+            }
             handshake_success = handshake();
+            // if (!handshake_success)
+            //     std::cout << "unsuccessful handshake from " << id << std::endl;
         }
 
         std::cout << "successful handshake" << std::endl;
@@ -92,68 +97,65 @@ namespace torrent
 
     bool torrent::thread::handshake()
     {
-        asio::error_code ec{};
-
-        endpoint = std::move(std::make_shared<asio::ip::tcp::endpoint>(asio::ip::make_address(peer.address, ec), peer.port));
-
-        if (ec)
+        try
         {
-            std::cout << ec.message() << std::endl;
+            /* code */
+            endpoint.reset();
+            endpoint = std::make_shared<asio::ip::tcp::endpoint>(asio::ip::make_address(peer.address), peer.port);
+
+            context.reset();
+            context = std::make_shared<asio::io_context>();
+
+            socket.reset();
+            socket = std::make_shared<asio::ip::tcp::socket>(*context);
+
+            std::chrono::milliseconds span(100);
+            std::chrono::milliseconds zero_s(0);
+
+            std::future<void> connect_status = socket->async_connect(*endpoint, asio::use_future);
+            context->run_for(span);
+
+            try
+            {
+                if (connect_status.wait_for(zero_s) == std::future_status::timeout)
+                    return false;
+
+                connect_status.get();
+            }
+            catch (const std::exception &e)
+            {
+                std::cout << "caught" << std::endl;
+            }
+
+            // socket.connect(endpoint, ec);
+
+            std::string handshake_string = generate_handshake(metadata.info_hash, metadata.client_id);
+            socket->write_some(asio::buffer(handshake_string.data(), handshake_string.length()));
+
+            using namespace std::chrono_literals;
+            std::this_thread::sleep_for(200ms);
+
+            socket->wait(socket->wait_read);
+
+            size_t num_bytes = socket->available();
+
+            std::vector<char> read_buffer(num_bytes);
+
+            if (num_bytes > 0)
+            {
+                socket->read_some(asio::buffer(read_buffer.data(), read_buffer.size()));
+                handle_handshake(read_buffer);
+
+                // receiver(read_buffer, info_hash);
+            }
+
+            return true;
+        }
+        catch (const std::exception &e)
+        {
+            std::cout << "-------- caught ------" << std::endl;
             return false;
         }
-
-        context = std::move(std::make_shared<asio::io_context>());
-
-        socket = std::move(std::make_shared<asio::ip::tcp::socket>(*context));
-
-        std::chrono::milliseconds span(100);
-        std::chrono::milliseconds zero_s(0);
-
-        std::future<void> connect_status = socket->async_connect(*endpoint, asio::use_future);
-        context->run_for(span);
-
-        if (connect_status.wait_for(zero_s) == std::future_status::timeout)
-            return false;
-
-        connect_status.get();
-
-        // socket.connect(endpoint, ec);
-
-        if (ec)
-        {
-            std::cout << ec.message() << std::endl;
-        }
-        else
-        {
-            std::cout << "connected to peer" << peer.id << std::endl;
-        }
-
-        std::string handshake_string = generate_handshake(metadata.info_hash, metadata.client_id);
-        socket->write_some(asio::buffer(handshake_string.data(), handshake_string.length()), ec);
-
-        if (ec)
-        {
-            std::cout << ec.message() << std::endl;
-        }
-
-        using namespace std::chrono_literals;
-        std::this_thread::sleep_for(100ms);
-
-        socket->wait(socket->wait_read);
-
-        size_t num_bytes = socket->available();
-
-        std::vector<char> read_buffer(num_bytes);
-
-        if (num_bytes > 0)
-        {
-            socket->read_some(asio::buffer(read_buffer.data(), read_buffer.size()), ec);
-            handle_handshake(read_buffer);
-
-            // receiver(read_buffer, info_hash);
-        }
-
-        return true;
     }
 } // namespace torrent
 

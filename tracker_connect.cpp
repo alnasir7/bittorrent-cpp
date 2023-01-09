@@ -69,6 +69,12 @@ namespace torrent::tracker
         map_t info = torrent.get_info();
         std::string info_hash = get_info_hash(info);
 
+        auto pieces_variant = info.find("pieces");
+        std::string pieces = std::get<std::string>(pieces_variant->second);
+
+        auto piece_length_variant = info.find("piece length");
+        num_t piece_length = std::get<num_t>(piece_length_variant->second);
+
         // std::cout << "info hash: " << info_hash << std::endl;
         // std::cout << "url: " << url << std::endl;
 
