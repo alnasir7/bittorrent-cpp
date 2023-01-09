@@ -4,6 +4,10 @@
 #include "torrent_downloader.h"
 #include "tracker_response.h"
 #include <string>
+#include <memory>
+#include <asio.hpp>
+#include <asio/ts/buffer.hpp>
+#include <asio/ts/internet.hpp>
 // bool handshake(torrent::tracker::Peer peer, std::string info_hash, std::string client_id);
 // void receiver(std::vector<char> received_message);
 
@@ -17,6 +21,9 @@ namespace torrent
         downloader::peer peer;
         metadata metadata;
         downloader::downloader *downloader;
+        std::shared_ptr<asio::ip::tcp::endpoint> endpoint;
+        std::shared_ptr<asio::io_context> context;
+        std::shared_ptr<asio::ip::tcp::socket> socket;
 
     public:
         thread(int id, torrent::metadata metadata, downloader::downloader *downloader);

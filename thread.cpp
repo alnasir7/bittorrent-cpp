@@ -94,7 +94,7 @@ namespace torrent
     {
         asio::error_code ec{};
 
-        asio::ip::tcp::endpoint endpoint(asio::ip::make_address(peer.address, ec), peer.port);
+        endpoint = std::move(std::make_shared<asio::ip::tcp::endpoint>(asio::ip::make_address(peer.address, ec), peer.port));
 
         if (ec)
         {
@@ -102,15 +102,15 @@ namespace torrent
             return false;
         }
 
-        asio::io_context context;
+        context = std::move(std::make_shared<asio::io_context>());
 
-        asio::ip::tcp::socket socket{context};
+        socket = std::move(std::make_shared<asio::ip::tcp::socket>(*context));
 
         std::chrono::milliseconds span(100);
         std::chrono::milliseconds zero_s(0);
 
-        std::future<void> connect_status = socket.async_connect(endpoint, asio::use_future);
-        context.run_for(span);
+        std::future<void> connect_status = socket->async_connect(*endpoint, asio::use_future);
+        context->run_for(span);
 
         if (connect_status.wait_for(zero_s) == std::future_status::timeout)
             return false;
@@ -129,7 +129,7 @@ namespace torrent
         }
 
         std::string handshake_string = generate_handshake(metadata.info_hash, metadata.client_id);
-        socket.write_some(asio::buffer(handshake_string.data(), handshake_string.length()), ec);
+        socket->write_some(asio::buffer(handshake_string.data(), handshake_string.length()), ec);
 
         if (ec)
         {
@@ -139,15 +139,15 @@ namespace torrent
         using namespace std::chrono_literals;
         std::this_thread::sleep_for(100ms);
 
-        socket.wait(socket.wait_read);
+        socket->wait(socket->wait_read);
 
-        size_t num_bytes = socket.available();
+        size_t num_bytes = socket->available();
 
         std::vector<char> read_buffer(num_bytes);
 
         if (num_bytes > 0)
         {
-            socket.read_some(asio::buffer(read_buffer.data(), read_buffer.size()), ec);
+            socket->read_some(asio::buffer(read_buffer.data(), read_buffer.size()), ec);
             handle_handshake(read_buffer);
 
             // receiver(read_buffer, info_hash);

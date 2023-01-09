@@ -4,6 +4,7 @@
 #include <string>
 #include <queue>
 #include <optional>
+#include <mutex>
 
 using num_t = long long;
 
@@ -45,6 +46,7 @@ namespace torrent::downloader
         int num_threads;
         torrent::metadata metadata;
         std::vector<piece> pieces;
+        std::mutex peers_mutex;
 
     public:
         downloader(std::string path, int num_threads);

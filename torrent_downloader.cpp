@@ -7,6 +7,7 @@
 #include <iostream>
 #include <thread>
 #include <optional>
+#include <mutex>
 #include "thread.h"
 
 namespace torrent::downloader
@@ -61,6 +62,7 @@ namespace torrent::downloader
 
     std::optional<peer> downloader::request_peer(int id)
     {
+        std::scoped_lock lock{peers_mutex};
         for (int i = 0; i < peers.size(); i++)
         {
             if (peers[i].thread_in_charge == -1)
@@ -74,6 +76,9 @@ namespace torrent::downloader
 
     void downloader::release_peer(int peer_id)
     {
-        peers[peer_id].thread_in_charge = -1;
+        std::scoped_lock lock{peers_mutex};
+        peers[peer_id].thread_in_charge = -2; // can not be reused. Once a thread lets go of a peer
+        // it is either because it is done downloading all of its pieces or because it couldn't connect
+        // to it, therefore the peer should not be used again
     }
 }
