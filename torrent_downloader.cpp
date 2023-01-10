@@ -63,17 +63,14 @@ namespace torrent::downloader
     std::optional<peer> downloader::request_peer(int id)
     {
         std::scoped_lock lock{peers_mutex};
-        std::cout << "enter " << id << std::endl;
         for (int i = 0; i < peers.size(); i++)
         {
             if (peers[i].thread_in_charge == -1)
             {
                 peers[i].thread_in_charge = id;
-                std::cout << "exit " << id << std::endl;
                 return std::optional<peer>{peers[i]};
             }
         }
-        std::cout << "exit " << id << std::endl;
         return std::nullopt;
     }
 

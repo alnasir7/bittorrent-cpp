@@ -99,14 +99,14 @@ namespace torrent
     {
         try
         {
-            /* code */
+            socket.reset();
+            context.reset();
             endpoint.reset();
+
             endpoint = std::make_shared<asio::ip::tcp::endpoint>(asio::ip::make_address(peer.address), peer.port);
 
-            context.reset();
             context = std::make_shared<asio::io_context>();
 
-            socket.reset();
             socket = std::make_shared<asio::ip::tcp::socket>(*context);
 
             std::chrono::milliseconds span(100);
