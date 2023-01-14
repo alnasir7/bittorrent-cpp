@@ -8,6 +8,7 @@
 #include "info_hash.h"
 #include "tracker_response.h"
 #include "bencode.hpp"
+#include "utils.h"
 #include <cpr/cpr.h>
 
 // std::string hexDecode(const std::string &value)
@@ -87,16 +88,6 @@ namespace torrent::tracker
         }
 
         return tracker_request{info_hash, total_size, url};
-    }
-
-    int bytesToInt(std::string bytes)
-    {
-        // FIXME: Use bitwise operation to convert
-        std::string binStr;
-        long byteCount = bytes.size();
-        for (int i = 0; i < byteCount; i++)
-            binStr += std::bitset<8>(bytes[i]).to_string();
-        return stoi(binStr, 0, 2);
     }
 
     std::vector<Peer> parse_peers(std::string &peers_binary)

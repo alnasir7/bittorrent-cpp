@@ -16,7 +16,7 @@
 namespace torrent
 {
     torrent::thread::thread(int id, torrent::metadata metadata, downloader::downloader *downloader)
-        : id{id}, metadata{metadata}, downloader{downloader}, has_peer{false}
+        : id{id}, metadata{metadata}, downloader{downloader}, has_peer{false}, state{UNCONNECTED}, pending_download{false}
     {
     }
 
@@ -48,19 +48,58 @@ namespace torrent
         bool handshake_success = false;
         while (!handshake_success)
         {
-            // std::cout << "attempt handshake from " << id << std::endl;
             release_peer();
             if (!set_peer())
             {
                 return false;
             }
             handshake_success = handshake();
-            // if (!handshake_success)
-            //     std::cout << "unsuccessful handshake from " << id << std::endl;
         }
 
         std::cout << "successful handshake" << std::endl;
+        // unchocke
+
+        // interested
         return true;
+    }
+
+    void torrent::thread::receive_handler(std::vector<char> received_message)
+    {
+        // idea: write a function that reades some bytes from some sort
+        // of char array / stream that has iterators. Make it a template
+        // function using concepts
+        uint8_t first_bit = received_message[0];
+        if (first_bit == 19)
+        {
+            return;
+        }
+        int len = 0;
+        for (int i = 0; i < 32; i++)
+        {
+            uint8_t byte = received_message[i];
+            std::cout << byte << std::endl;
+            len = (len << 8) | byte;
+        }
+        std::cout << len << std::endl;
+    }
+
+    void torrent::thread::receive_message()
+    {
+        std::cout << "calling receive_message" << std::endl;
+        char buffer[5];
+        asio::read(*socket, asio::buffer(buffer, 5));
+        // make bytesToInts template
+        std::stringstream buffer_stream;
+        for (int i = 0; i < 4; i++)
+        {
+            buffer_stream << buffer[i];
+        }
+        int len = bytesToInt(buffer_stream.str());
+        std::stringstream id_buffer_stream;
+        id_buffer_stream << buffer[4];
+        int message_id = bytesToInt(id_buffer_stream.str());
+
+        std::cout << "len: " << len << ", message_id=" << message_id << std::endl;
     }
 
     bool torrent::thread::start()
@@ -68,6 +107,17 @@ namespace torrent
         if (!establish_peer_connection())
         {
             return false;
+        }
+
+        while (state != DONE)
+        {
+            if (!pending_download)
+            {
+                // TODO: Make piece request
+                // pending_download = true
+            }
+            receive_message();
+            break;
         }
 
         return true;
@@ -127,27 +177,12 @@ namespace torrent
                 std::cout << "caught" << std::endl;
             }
 
-            // socket.connect(endpoint, ec);
-
             std::string handshake_string = generate_handshake(metadata.info_hash, metadata.client_id);
             socket->write_some(asio::buffer(handshake_string.data(), handshake_string.length()));
 
-            using namespace std::chrono_literals;
-            std::this_thread::sleep_for(200ms);
-
-            socket->wait(socket->wait_read);
-
-            size_t num_bytes = socket->available();
-
-            std::vector<char> read_buffer(num_bytes);
-
-            if (num_bytes > 0)
-            {
-                socket->read_some(asio::buffer(read_buffer.data(), read_buffer.size()));
-                handle_handshake(read_buffer);
-
-                // receiver(read_buffer, info_hash);
-            }
+            std::vector<char> read_buffer(68);
+            asio::read(*socket, asio::buffer(read_buffer.data(), read_buffer.size()));
+            handle_handshake(read_buffer);
 
             return true;
         }

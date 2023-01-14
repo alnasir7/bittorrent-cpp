@@ -78,6 +78,11 @@
         "numeric": "cpp",
         "queue": "cpp",
         "set": "cpp",
-        "thread": "cpp"
+        "thread": "cpp",
+        "any": "cpp",
+        "codecvt": "cpp",
+        "csignal": "cpp",
+        "coroutine": "cpp",
+        "*.ipp": "cpp"
     }
 }

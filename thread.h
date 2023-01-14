@@ -5,6 +5,7 @@
 #include "tracker_response.h"
 #include <string>
 #include <memory>
+#include <vector>
 #include <asio.hpp>
 #include <asio/ts/buffer.hpp>
 #include <asio/ts/internet.hpp>
@@ -13,6 +14,14 @@
 
 namespace torrent
 {
+    enum thread_state
+    {
+        UNCONNECTED,
+        CHOCKED,
+        UNCHOKED,
+        DONE
+    };
+
     class thread
     {
     private:
@@ -24,6 +33,10 @@ namespace torrent
         std::shared_ptr<asio::ip::tcp::endpoint> endpoint;
         std::shared_ptr<asio::io_context> context;
         std::shared_ptr<asio::ip::tcp::socket> socket;
+        thread_state state;
+        bool pending_download;
+        void receive_handler(std::vector<char> received_message);
+        void receive_message();
 
     public:
         thread(int id, torrent::metadata metadata, downloader::downloader *downloader);

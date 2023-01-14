@@ -1,4 +1,5 @@
 #include <string>
+#include <bitset>
 
 unsigned char hexval(unsigned char c)
 {
@@ -10,6 +11,16 @@ unsigned char hexval(unsigned char c)
         return c - 'A' + 10;
     else
         return '\0';
+}
+
+int bytesToInt(std::string bytes)
+{
+    // FIXME: Use bitwise operation to convert
+    std::string binStr;
+    long byteCount = bytes.size();
+    for (int i = 0; i < byteCount; i++)
+        binStr += std::bitset<8>(bytes[i]).to_string();
+    return stoi(binStr, 0, 2);
 }
 
 std::string decode_hex(const std::string &in)
